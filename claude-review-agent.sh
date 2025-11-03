@@ -1,7 +1,7 @@
 #!/bin/bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Usage: claude-review-agent.sh
+# Usage: claude-review-agent.sh [/path/to/repo] [branch]
 #
 # Creates a new branch `claude-review-agent/${current-branch}-YYYY-MM-DD-${RAND}`.
 # The new branch contains FIXUP commits with review feedback.
@@ -14,15 +14,10 @@
 # * design review
 # * ...
 
-set -euo pipefail
+set -eo pipefail
 
-BRANCH_PREFIX=claude-review-agent
-
-ORIG_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-RAND=$(uuidgen|cut -d'-' -f1)
-DATE=$(date +"%Y-%m-%d")
-BRANCH="${BRANCH_PREFIX}/${ORIG_BRANCH}-${DATE}-${RAND}"
-WORKTREE_DIR="${BRANCH}"
+ORIG_BRANCH=""
+REPODIR="$PWD"
 
 usage () {
   # Prints anything from the first line that is just '#' to the first empty line
@@ -41,13 +36,56 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-GIT_DIR=$(echo $PWD)
-git worktree add -b "${BRANCH}" "${WORKTREE_DIR}"
+case "$#" in
+  # Two arguments are path and branch
+  2)
+    REPODIR="$1"
+    ORIG_BRANCH="$2"
+    shift 2
+    ;;
+  # One argument could be either a repo path or a branch
+  1)
+    if [[ -d "$1" ]]; then
+      REPODIR="$1"
+    else
+      ORIG_BRANCH="$1"
+    fi
+    shift
+    ;;
+  0)
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac
+
+set -u
+
+pushd "${REPODIR}" > /dev/null || exit 1
+
+if [[ -z "${ORIG_BRANCH}" ]]; then
+  ORIG_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+elif ! git rev-parse "${ORIG_BRANCH}" > /dev/null 2>&1; then
+  echo "Unable to find branch ${ORIG_BRANCH} in this repo"
+  exit 1
+fi
+
+BRANCH_PREFIX=claude-review-agent
+RAND=$(uuidgen|cut -d'-' -f1)
+DATE=$(date +"%Y-%m-%d")
+BRANCH="${BRANCH_PREFIX}/${ORIG_BRANCH}-${DATE}-${RAND}"
+WORKTREE_DIR="${BRANCH}"
+
+GIT_DIR="$PWD"
+echo "Reviewing ${ORIG_BRANCH} in ${PWD}"
+git worktree add --quiet -b "${BRANCH}" "${WORKTREE_DIR}" "${ORIG_BRANCH}"
 
 function cleanup () {
   cd "${GIT_DIR}"
   git worktree remove --force "${WORKTREE_DIR}"
   rm -r "${BRANCH_PREFIX}"
+  popd > /dev/null || exit 1
 }
 trap cleanup EXIT
 
@@ -155,6 +193,7 @@ Begin your review immediately upon invocation. Work systematically through each 
 Remember, the process! You *must* add the review feedback inline, in the code, as comments, and commit the feedback that belongs together in new FIXUP commits. Also remember the format of the reviews. The output shall only be a single line: the number of FIXUP commits added.
 EOF
 
+echo "Claude is pondering, contemplating, mulling, puzzling, meditating, etc."
 claude \
   --allowed-tools 'Bash(git status) Bash(git diff:*) Bash(git log:*) Bash(git show:*) Bash(git add:*) Bash(git commit:*) Edit(./**)' \
   -p "Use the code-reviewer subagent to check this branch, add fixup commits and print the number of new commits on the new branch ${BRANCH}"
