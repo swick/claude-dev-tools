@@ -3,6 +3,9 @@
 #
 # Usage: claude-review-agent.sh [/path/to/repo] [branch]
 #
+# Options:
+#    --skip-claude  ... Set up the repository but don't run claude
+#
 # Creates a new branch `claude-review-agent/${current-branch}-YYYY-MM-DD-${RAND}`.
 # The new branch contains FIXUP commits with review feedback.
 # This internally uses git worktree to not disrupt the checkout
@@ -18,6 +21,7 @@ set -eo pipefail
 
 ORIG_BRANCH=""
 REPODIR="$PWD"
+SKIP_CLAUDE=""
 
 usage () {
   # Prints anything from the first line that is just '#' to the first empty line
@@ -29,6 +33,10 @@ while [[ $# -gt 0 ]]; do
     --help)
       usage
       exit 0
+      ;;
+    --skip-claude)
+      SKIP_CLAUDE="echo"
+      shift
       ;;
     *)
       break;
@@ -194,7 +202,7 @@ Remember, the process! You *must* add the review feedback inline, in the code, a
 EOF
 
 echo "Claude is pondering, contemplating, mulling, puzzling, meditating, etc."
-claude \
+${SKIP_CLAUDE} claude \
   --allowed-tools 'Bash(git status) Bash(git diff:*) Bash(git log:*) Bash(git show:*) Bash(git add:*) Bash(git commit:*) Edit(./**)' \
   -p "Use the code-reviewer subagent to check this branch, add fixup commits and print the number of new commits on the new branch ${BRANCH}"
 
