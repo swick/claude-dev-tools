@@ -5,6 +5,7 @@
 #
 # Options:
 #    --skip-claude  ... Set up the repository but don't run claude
+#    --purge-reviews .. Delete all existing review branches and exit
 #
 # Creates a new branch `claude-review-agent/${current-branch}-YYYY-MM-DD-${RAND}`.
 # The new branch contains FIXUP commits with review feedback.
@@ -19,9 +20,11 @@
 
 set -eo pipefail
 
+BRANCH_PREFIX=claude-review-agent
 ORIG_BRANCH=""
 REPODIR="$PWD"
 SKIP_CLAUDE=""
+PURGE=""
 
 usage () {
   # Prints anything from the first line that is just '#' to the first empty line
@@ -36,6 +39,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skip-claude)
       SKIP_CLAUDE="echo"
+      shift
+      ;;
+    --purge-reviews)
+      PURGE="1"
       shift
       ;;
     *)
@@ -72,6 +79,13 @@ set -u
 
 pushd "${REPODIR}" > /dev/null || exit 1
 
+if [[ -n "${PURGE}" ]]; then
+  while IFS= read -r branch; do
+    git branch -D "${branch}"
+  done < <(git branch --format='%(refname:short)' --list "${BRANCH_PREFIX}")
+  exit 0
+fi
+
 if [[ -z "${ORIG_BRANCH}" ]]; then
   ORIG_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 elif ! git rev-parse "${ORIG_BRANCH}" > /dev/null 2>&1; then
@@ -79,7 +93,6 @@ elif ! git rev-parse "${ORIG_BRANCH}" > /dev/null 2>&1; then
   exit 1
 fi
 
-BRANCH_PREFIX=claude-review-agent
 RAND=$(uuidgen|cut -d'-' -f1)
 DATE=$(date +"%Y-%m-%d")
 BRANCH="${BRANCH_PREFIX}/${ORIG_BRANCH}-${DATE}-${RAND}"
