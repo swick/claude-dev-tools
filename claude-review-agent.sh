@@ -84,6 +84,7 @@ RAND=$(uuidgen|cut -d'-' -f1)
 DATE=$(date +"%Y-%m-%d")
 BRANCH="${BRANCH_PREFIX}/${ORIG_BRANCH}-${DATE}-${RAND}"
 WORKTREE_DIR="${BRANCH}"
+AGENT_FILE=.claude/agents/code-reviewer.md
 
 GIT_DIR="$PWD"
 echo "Reviewing ${ORIG_BRANCH} in ${PWD}"
@@ -99,8 +100,8 @@ trap cleanup EXIT
 
 cd "${WORKTREE_DIR}"
 
-mkdir -p .claude/agents
-cat <<'EOF' >>.claude/agents/code-reviewer.md
+mkdir -p "$(dirname "${AGENT_FILE}")"
+cat <<'EOF' >>"${AGENT_FILE}"
 ---
 name: code-reviewer
 description: Use this agent when you need to perform a comprehensive code review of recent commits. This agent should be invoked:\n\n1. After completing a logical chunk of work (feature, bug fix, or refactor)\n2. Before merging a branch or creating a pull request\n3. When the user explicitly reques
@@ -200,6 +201,9 @@ Begin your review immediately upon invocation. Work systematically through each 
 
 Remember, the process! You *must* add the review feedback inline, in the code, as comments, and commit the feedback that belongs together in new FIXUP commits. Also remember the format of the reviews. The output shall only be a single line: the number of FIXUP commits added.
 EOF
+
+git add "${AGENT_FILE}"
+git commit --quiet --no-verify -m "REMOVE ME: Add the Claude Agent file"
 
 echo "Claude is pondering, contemplating, mulling, puzzling, meditating, etc."
 ${SKIP_CLAUDE} claude \
