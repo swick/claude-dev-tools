@@ -1,6 +1,8 @@
 #!/bin/bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-
+#
+# Usage: claude-review-agent.sh
+#
 # Creates a new branch `claude-review-agent/${current-branch}-${RAND}`.
 # The new branch contains FIXUP commits with review feedback.
 # This internally uses git worktree to not disrupt the checkout
@@ -20,6 +22,23 @@ ORIG_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 RAND=$(uuidgen|cut -d'-' -f1)
 BRANCH="${BRANCH_PREFIX}/${ORIG_BRANCH}-${RAND}"
 WORKTREE_DIR="${BRANCH}"
+
+usage () {
+  # Prints anything from the first line that is just '#' to the first empty line
+  sed -n -e '/^#$/,/^$/s/^#[ ]\?//p' "${BASH_SOURCE[0]}"
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --help)
+      usage
+      exit 0
+      ;;
+    *)
+      break;
+      ;;
+  esac
+done
 
 GIT_DIR=$(echo $PWD)
 git worktree add -b "${BRANCH}" "${WORKTREE_DIR}"
