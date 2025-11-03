@@ -3,7 +3,7 @@
 #
 # Usage: claude-review-agent.sh
 #
-# Creates a new branch `claude-review-agent/${current-branch}-${RAND}`.
+# Creates a new branch `claude-review-agent/${current-branch}-YYYY-MM-DD-${RAND}`.
 # The new branch contains FIXUP commits with review feedback.
 # This internally uses git worktree to not disrupt the checkout
 # and claude subagents to do the reviewing.
@@ -20,7 +20,8 @@ BRANCH_PREFIX=claude-review-agent
 
 ORIG_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 RAND=$(uuidgen|cut -d'-' -f1)
-BRANCH="${BRANCH_PREFIX}/${ORIG_BRANCH}-${RAND}"
+DATE=$(date +"%Y-%m-%d")
+BRANCH="${BRANCH_PREFIX}/${ORIG_BRANCH}-${DATE}-${RAND}"
 WORKTREE_DIR="${BRANCH}"
 
 usage () {
