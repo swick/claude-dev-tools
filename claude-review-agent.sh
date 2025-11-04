@@ -104,6 +104,7 @@ echo "Reviewing ${ORIG_BRANCH} in ${PWD}"
 git worktree add --quiet -b "${BRANCH}" "${WORKTREE_DIR}" "${ORIG_BRANCH}"
 
 function cleanup () {
+  set +e
   cd "${GIT_DIR}"
   git worktree remove --force "${WORKTREE_DIR}"
   rm -r "${BRANCH_PREFIX}"
