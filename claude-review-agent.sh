@@ -117,11 +117,31 @@ mkdir -p "$(dirname "${AGENT_FILE}")"
 cat <<'EOF' >>"${AGENT_FILE}"
 ---
 name: code-reviewer
-description: Use this agent when you need to perform a comprehensive code review of recent commits. This agent should be invoked:\n\n1. After completing a logical chunk of work (feature, bug fix, or refactor)\n2. Before merging a branch or creating a pull request\n3. When the user explicitly reques
-ts a code review\n4. When the user mentions reviewing, checking, or validating their recent code changes\n\nExamples:\n- User: "I just implemented the authentication module, can you review it?"\n  Assistant: "I'll use the code-reviewer agent to perform a comprehensive review of your authentication
-implementation."\n  \n- User: "I've finished refactoring the database layer. Let's make sure everything looks good."\n  Assistant: "Let me launch the code-reviewer agent to examine your database refactoring work."\n  \n- User: "I added error handling to the API endpoints"\n  Assistant: "Great! I'll
- use the code-reviewer agent to review your error handling implementation and ensure it meets our quality standards."\n  \n- User: "Review my recent commits"\n  Assistant: "I'll use the code-reviewer agent to analyze your recent commits and provide detailed feedback."\n\nDo NOT use this agent for:\
-n- Initial code generation or writing new code\n- General questions about the codebase\n- Non-code related tasks
+description: |
+  Use this agent when you need to perform a comprehensive code review of recent commits. This agent should be invoked:
+
+  1. After completing a logical chunk of work (feature, bug fix, or refactor)
+  2. Before merging a branch or creating a pull request
+  3. When the user explicitly requests a code review
+  4. When the user mentions reviewing, checking, or validating their recent code changes
+
+  Examples:
+  - User: "I just implemented the authentication module, can you review it?"
+    Assistant: "I'll use the code-reviewer agent to perform a comprehensive review of your authentication implementation."
+
+  - User: "I've finished refactoring the database layer. Let's make sure everything looks good."
+    Assistant: "Let me launch the code-reviewer agent to examine your database refactoring work."
+
+  - User: "I added error handling to the API endpoints"
+    Assistant: "Great! I'll use the code-reviewer agent to review your error handling implementation and ensure it meets our quality standards."
+
+  - User: "Review my recent commits"
+    Assistant: "I'll use the code-reviewer agent to analyze your recent commits and provide detailed feedback."
+
+  Do NOT use this agent for:
+  - Initial code generation or writing new code
+  - General questions about the codebase
+  - Non-code related tasks
 tools: Glob, Grep, Read, WebFetch, TodoWrite, BashOutput, KillShell, Edit, Write, NotebookEdit, Bash
 model: sonnet
 ---
@@ -221,7 +241,7 @@ git commit --quiet --no-verify -m "REMOVE ME: Add the Claude Agent file"
 echo "Claude is pondering, contemplating, mulling, puzzling, meditating, etc."
 ${SKIP_CLAUDE} claude \
   --allowed-tools 'Bash(git status) Bash(git diff:*) Bash(git log:*) Bash(git show:*) Bash(git add:*) Bash(git commit:*) Edit(./**)' \
-  -p "Use the code-reviewer subagent to check this branch, add fixup commits and print the number of new commits on the new branch ${BRANCH}"
+  -p "Use the code-reviewer subagent to check this branch, add fixup commits and print the number of new commits on the new branch ${BRANCH}. Ignore ${AGENT_FILE} during this review."
 
 echo ""
 echo "REVIEW DONE"
