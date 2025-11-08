@@ -114,6 +114,8 @@ trap cleanup EXIT
 
 cd "${WORKTREE_DIR}"
 
+echo ".gitignore" >> .gitignore
+echo ".claude" >> .gitignore
 mkdir -p "$(dirname "${AGENT_FILE}")"
 cat <<'EOF' >>"${AGENT_FILE}"
 ---
@@ -236,13 +238,10 @@ Begin your review immediately upon invocation. Work systematically through each 
 Remember, the process! You *must* add the review feedback inline, in the code, as comments, and commit the feedback that belongs together in new FIXUP commits. Also remember the format of the reviews. The output shall only be a single line: the number of FIXUP commits added.
 EOF
 
-git add "${AGENT_FILE}"
-git commit --quiet --no-verify -m "REMOVE ME: Add the Claude Agent file"
-
 echo "Claude is pondering, contemplating, mulling, puzzling, meditating, etc."
 ${SKIP_CLAUDE} claude \
   --allowed-tools 'Bash(git status) Bash(git diff:*) Bash(git log:*) Bash(git show:*) Bash(git add:*) Bash(git commit:*) Edit(./**)' \
-  -p "Use the code-reviewer subagent to check this branch, add fixup commits and print the number of new commits on the new branch ${BRANCH}. Ignore ${AGENT_FILE} during this review."
+  -p "Use the code-reviewer subagent to check this branch, add fixup commits and print the number of new commits on the new branch ${BRANCH}."
 
 echo ""
 echo "REVIEW DONE"
